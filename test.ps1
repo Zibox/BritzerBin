@@ -1,25 +1,3 @@
-Add-Type -TypeDefinition @"
-using System;
-using System.Management.Automation;
-
-public static class FunctionExtractor
-{
-    public static string ExtractFunctionFromCallerSession(string functionName)
-    {
-        using (var powershell = PowerShell.Create(RunspaceMode.CurrentRunspace))
-        {
-            powershell.AddScript($"$function:{functionName}.ScriptBlock.ToString()");
-            var result = powershell.Invoke();
-            if (result.Count > 0)
-            {
-                return result[0].ToString();
-            }
-        }
-        return null;
-    }
-}
-"@ -Language CSharp
-
 function Get-Greeting {
     [CmdletBinding()]
     param(
@@ -41,6 +19,18 @@ $testSb = {
     "testStr" | out-file -path "c:\temp\rstest.txt" -append
     $testVar | out-file -path "c:\temp\rstest.txt" -append
 }
+$loopSb = {
+    while ($true) {
+        Get-Greeting | Out-File -Path "c:\temp\rstest.txt" -Append
+        Start-Sleep 15
+    }
+}
+$moduleSb = {
+    Import-Module "W:\source\BritzerBin\src\obj\Debug\net7.0\BritzerBin.dll"
+    $pool = New-RunspacePool -MaxThreads 4
+    Write-Output $pool
+    $pool | Out-File "c:\temp\rstest.txt" -append
+}
 Import-Module "W:\source\BritzerBin\src\obj\Debug\net7.0\BritzerBin.dll"
 $testVar = 'TestValue123'
 $test = New-InitialSessionState -Variable 'testVar' -Function 'Get-Greeting'
@@ -51,8 +41,10 @@ $ps.AddScript($testSb)
 $ps.RunspacePool = $pool
 $ps.Invoke()
 $ps3 = [powershell]::Create()
-$ps3.AddScript('while($true){Get-Greeting | Out-File -Path "c:\temp\rstest.txt;start-sleep 5}')
+$ps3.AddScript($loopSb)
 $ps3.RunspacePool = $pool
 $ps3.BeginInvoke()
-
-
+$ps4 = [Powershell]::Create()
+$ps4.AddScript($moduleSb)
+$ps4.RunspacePool = $pool
+$ps4.BeginInvoke()

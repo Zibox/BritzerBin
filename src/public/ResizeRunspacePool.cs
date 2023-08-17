@@ -7,12 +7,12 @@ using System.Management.Automation.Runspaces;
 
 namespace BritzerBin
 {
-    [Cmdlet(VerbsCommon.New,"RunspacePool")]
+    [Cmdlet(VerbsCommon.Resize,"RunspacePool")]
     [OutputType(typeof(void))]
     public class ResizeRunspacePool : PSCmdlet
     {
         [Parameter(Mandatory = true, Position = 0, ValueFromPipelineByPropertyName = true)]
-        [ValidateRange(2,int.MaxValue)]
+        [ValidateRange(2,32)]
         public int MaxThreads { get; set; }
         [Parameter(Mandatory = true, Position = 1)]
         public RunspacePool? RunspacePool {get;set;}
